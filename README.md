@@ -1,3 +1,3 @@
 # Meta_portfolio
 
-## missing dataset_j in git
+## missing dataset_j, outputs, checkpoints in git

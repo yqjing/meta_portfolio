@@ -31,6 +31,7 @@ examples/rl_order_execution/outputs/
 
 examples/benchmarks_dynamic/incremental/outputs/
 examples/benchmarks_dynamic/incremental/dataset_j/
+examples/benchmarks_dynamic/incremental/checkpoints/
 
 
 *.egg-info/
