@@ -161,7 +161,7 @@ class DoubleAdapt(ForecastModel):
         # print("the model in forward is")
         # print(model)
 
-        # view the shape of X
+        # # view the shape of X
         # print("the shape of X in the forward is", X.shape)
         
         return super().forward(X, model), X
