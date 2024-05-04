@@ -130,8 +130,8 @@ class IncrementalExp:
             calendar_path=None,
             market="csi300",
             horizon=1,
-            alpha=360,
-            x_dim=None,
+            alpha= 360,
+            x_dim= 8 * 60,
             step=2,
             model_name="ALSTM",
             lr=0.001,
@@ -221,7 +221,7 @@ class IncrementalExp:
         self.provider_uri = os.path.join(root_path, data_dir)
 
         # !!!!!! !!!!!!
-        calendar = pd.read_pickle("dataset_j/calendar.pkl")  # pd.series
+        calendar = pd.read_pickle("dataset_j/calendar_trailing_20.pkl")  # pd.series
         self.ta = utils.TimeAdjuster(calendar)
 
         self.market = market
@@ -273,7 +273,8 @@ class IncrementalExp:
         self.use_extra = use_extra
 
         # self.factor_num = 6 if self.alpha == 360 else 20
-        self.factor_num = 6
+        # factor number
+        self.factor_num = 8
         self.x_dim = x_dim if x_dim else (360 if self.alpha == 360 else 20 * 20)
         print('Experiment name:', self.experiment_name)
 
@@ -449,7 +450,7 @@ class IncrementalExp:
         else:
             save_path = None
 
-        data = pd.read_pickle("dataset_j/my_data.pkl")
+        data = pd.read_pickle("dataset_j/my_data_trailing_20.pkl")
 
         # print(self.segments)
         assert data.index[0][0] <= self.ta.align_time(self.segments['train'][0], tp_type='start')

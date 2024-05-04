@@ -139,7 +139,7 @@ class IncrementalManager:
                     print("pred_y_df head is: \n", pred_y.head(20))
                     mse_all += [mse]
                     best_checkpoint = copy.deepcopy(self.framework.state_dict())
-                    torch.save(mse_all, "outputs/train_mse.pkl")
+                    torch.save(mse_all, "results/train_mse.pkl")
 
                     if ic < best_ic:
                         patience -= 1
@@ -238,7 +238,7 @@ class IncrementalManager:
         pred_y_all = pred_y_all.loc[date_slice]
         print("##### the test mse is: \n", mse)
         print("the pred_y in test is: \n", pred_y_all)
-        torch.save(pred_y_all, "outputs/pred_y_df.pkl")
+        torch.save(pred_y_all, "results/pred_y_df.pkl")
         return pred_y_all
 
 
