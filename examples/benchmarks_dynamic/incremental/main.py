@@ -129,7 +129,7 @@ class IncrementalExp:
             root_path='./dataset_j/dataset_jj/',
             calendar_path=None,
             market="csi300",
-            horizon=1,
+            horizon= 5 * 2,
             alpha= 360,
             x_dim= 8 * 60,
             step=2,
@@ -220,8 +220,7 @@ class IncrementalExp:
         self.data_dir = data_dir
         self.provider_uri = os.path.join(root_path, data_dir)
 
-        # !!!!!! !!!!!!
-        calendar = pd.read_pickle("dataset_j/calendar_trailing_20.pkl")  # pd.series
+        calendar = pd.read_pickle("dataset_j/calendar_c_21.pkl")  # pd.series
         self.ta = utils.TimeAdjuster(calendar)
 
         self.market = market
@@ -299,32 +298,13 @@ class IncrementalExp:
             test_end=self.test_slice.stop,
         ).basic_task()
 
-    def _load_data(self):
-        # FIXME: load your own data!
-        """
-        Returns:
-            pd.DataFrame:
-                the index col is pd.MultiIndex with the datetime as level 0 and the stock ID as level 1;
-                the col named 'feature' contains the stock feature vectors;
-                the col named 'label' contains the ground-truth labels.
-        """
-        from qlib.utils import init_instance_by_config
-        import qlib
-
-        qlib.init(provider_uri=self.provider_uri, region="us" if self.data_dir == "us_data" else "cn",)
-
-        dataset_conf = self.basic_task['dataset']
-
-        print('dataset conf is', dataset_conf)
-
-        return init_instance_by_config(dataset_conf).handler._learn
 
     def _init_model(self) -> nn.Module:
         # FIXME: init your own model!
         from qlib.utils import init_instance_by_config
 
-        if self.basic_task["model"]["class"] == "LinearModel":
-            return nn.Linear(self.x_dim, 1, bias=False)
+        if False:
+            return None
         else:
             model = init_instance_by_config(self.basic_task["model"])
             for child in model.__dict__.values():
@@ -332,7 +312,8 @@ class IncrementalExp:
                     return child
 
     def offline_training(self, segments: Dict[str, tuple] = None, data: pd.DataFrame = None, reload_path=None, save_path=None):
-        model = self._init_model()
+        # model = self._init_model()
+        model = torch.load("checkpoints/model.pkl")
 
         if self.naive:
             framework = IncrementalManager(model, x_dim=self.x_dim, lr_model=self.lr, begin_valid_epoch=0)
@@ -351,6 +332,7 @@ class IncrementalExp:
                 segments = self.segments
             rolling_tasks = utils.organize_all_tasks(segments, self.ta, step=self.step, trunc_days=self.horizon + 1,
                                                      rtype=utils.TimeAdjuster.SHIFT_SD, use_extra=self.use_extra)
+
             rolling_tasks_data = {k: utils.get_rolling_data(rolling_tasks[k],
                                                             data=data,
                                                             factor_num=self.factor_num, horizon=self.horizon,
@@ -391,7 +373,9 @@ class IncrementalExp:
         if framework is None:
             assert reload_path is not None
 
-            model = self._init_model()
+            # I don't think this is being runned?
+            # model = self._init_model()
+            model = torch.load("checkpoints/model.pkl")
             if self.naive:
                 framework = IncrementalManager(model, x_dim=self.x_dim, lr_model=self.lr,
                                                online_lr=self.online_lr, weight_decay=self.weight_decay,
@@ -419,28 +403,23 @@ class IncrementalExp:
                                                     to_tensor=self.preprocess_tensor)
         return framework.inference(meta_tasks_test=rolling_tasks_data, date_slice=self.test_slice)
 
-    def _evaluate_metrics(self, pred: pd.DataFrame):
-        from qlib.utils import init_instance_by_config
-        from qlib.data.dataset import DataHandlerLP
+    def _evaluate_metrics(self, data, pred_y_all):
+        label = data["label", "y1_y2_21_c"]
+        label.index = label.index.droplevel(1)
+        label = label.to_frame()
+        label.columns = ["label"]
 
-        """        
-        Note that the labels in pred_y_all are preprocessed. IC should be calculated by the raw labels. 
-        """
-        ds = init_instance_by_config(self.basic_task["dataset"])
-        label_all = ds.prepare(segments="test", col_set="label", data_key=DataHandlerLP.DK_R)
-        label_all = label_all.dropna(axis=0)
-        df = pred.loc[label_all.index]
-        df['label'] = label_all.values
+        pred = pred_y_all['pred']
+        pred.index = pred.index.droplevel(1)
+        pred = pred.to_frame()
+        pred.columns = ["pred"]
 
-        ic = df.groupby('datetime').apply(lambda df: df["pred"].corr(df["label"]))
-        ric = df.groupby('datetime').apply(lambda df: df["pred"].corr(df["label"], method="spearman"))
-        metrics = {
-            "IC": ic.mean(),
-            "ICIR": ic.mean() / ic.std(),
-            "Rank IC": ric.mean(),
-            "Rank ICIR": ric.mean() / ric.std(),
-        }
-        pprint(metrics)
+        df_pred = pd.merge(pred, label, on = "datetime")
+        mse = ((df_pred['pred'].to_numpy() - df_pred['label'].to_numpy()) ** 2).mean(axis=0)
+        df_pred.to_pickle("results/df_pred.pkl")
+
+        pprint(df_pred[:20])
+        pprint(f"##### test mse is {mse}")
 
     def workflow(self, checkpoint_dir: str = "./checkpoints/", reload_path: str = None):
         if checkpoint_dir:
@@ -450,7 +429,7 @@ class IncrementalExp:
         else:
             save_path = None
 
-        data = pd.read_pickle("dataset_j/my_data_trailing_20.pkl")
+        data = pd.read_pickle("dataset_j/y1_y2_c_21.pkl")
 
         # print(self.segments)
         assert data.index[0][0] <= self.ta.align_time(self.segments['train'][0], tp_type='start')
@@ -459,13 +438,13 @@ class IncrementalExp:
         framework = self.offline_training(data=data, save_path=save_path, reload_path=reload_path)
         pred_y_all = self.online_training(data=data, framework=framework)
 
-        torch.save(pred_y_all, "outputs/pre_y.pkl")
-
-        self._evaluate_metrics(pred_y_all)
+        self._evaluate_metrics(data, pred_y_all)
 
 
 if __name__ == "__main__":
-    print(sys.argv)
-    # fire.Fire(IncrementalExp)
+    start_time = time.time()
     m = IncrementalExp()
     m.workflow()
+    end_time = time.time()
+    duration = end_time - start_time
+    print(f"The duration of the program is {duration} seconds.")

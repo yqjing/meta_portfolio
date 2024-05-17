@@ -135,8 +135,8 @@ class IncrementalManager:
                 pred_y, ic, mse = self._run_epoch(phase, task_list)
 
                 if phase == "val":
-                    print("current train mse is: ", mse)
-                    print("pred_y_df head is: \n", pred_y.head(20))
+                    print("current validation mse is: ", mse)
+                    print("predicted y_val head is: \n", pred_y.head(20))
                     mse_all += [mse]
                     best_checkpoint = copy.deepcopy(self.framework.state_dict())
                     torch.save(mse_all, "results/train_mse.pkl")    # requires torch load to unlock
@@ -145,7 +145,6 @@ class IncrementalManager:
                         patience -= 1
                     else:
                         best_ic = ic
-                        # print("best ic:", best_ic)
                         patience = self.over_patience
                         
             if patience <= 0:
@@ -160,6 +159,15 @@ class IncrementalManager:
 
     def _run_epoch(self, phase: str, task_list: List[Dict[str, Union[pd.Index, torch.Tensor, np.ndarray]]],
                    tqdm_show: bool=False):
+        # # ======================================
+        # # for quick prediction without training
+        # if phase == "online":
+        #     book_quick = torch.load(f"books/book_{100}.pt")
+        #     self.framework.load_state_dict(book_quick['framework'])
+        #     self.framework.opt.load_state_dict(book_quick['framework_opt'])
+        #     self.opt.load_state_dict(book_quick['opt'])
+        # # =======================================
+
         pred_y_all = []
         indices = np.arange(len(task_list))
 
@@ -172,6 +180,7 @@ class IncrementalManager:
             self.override_online_lr_()
 
         self.phase = phase
+        counter = 0
         for i in tqdm(indices, desc=phase) if True else indices:
             meta_input = task_list[i]
             if not isinstance(meta_input['X_train'], torch.Tensor):
@@ -179,7 +188,11 @@ class IncrementalManager:
                     k: torch.tensor(v, device=self.framework.device, dtype=torch.float32) if 'idx' not in k else v
                     for k, v in meta_input.items()
                 }
-            pred = self._run_task(meta_input, phase)
+            if counter >= 5:
+                pred = self._run_task(meta_input, phase, counter, backward = True)
+            else:
+                pred = self._run_task(meta_input, phase, counter, backward = False)
+            counter += 1
             if phase != "train":
                 test_idx = meta_input["test_idx"]
                 pred_y_all.append(
@@ -203,7 +216,7 @@ class IncrementalManager:
             return pred_y_all, ic, mse
         return pred_y_all, None, None
 
-    def _run_task(self, meta_input: Dict[str, Union[pd.Index, torch.Tensor]], phase: str):
+    def _run_task(self, meta_input: Dict[str, Union[pd.Index, torch.Tensor]], phase: str, counter, backward):
         """ A single naive incremental learning task """
         self.framework.opt.zero_grad()
         # only one forecaster being trained in the offline training and updated in the online training 
@@ -234,11 +247,8 @@ class IncrementalManager:
         """
         self.framework.train()
         self.framework.to(self.framework.device)
-        pred_y_all, ic, mse  = self._run_epoch("online", meta_tasks_test, tqdm_show=True)
+        pred_y_all, _, _  = self._run_epoch("online", meta_tasks_test, tqdm_show=True)
         pred_y_all = pred_y_all.loc[date_slice]
-        print("##### the test mse is: \n", mse)
-        print("the pred_y in test is: \n", pred_y_all)
-        torch.save(pred_y_all, "results/pred_y_df.pkl")
         return pred_y_all
 
 
@@ -330,7 +340,8 @@ class DoubleAdaptManager(IncrementalManager):
                 if 'lr_y' in self.online_lr:
                     self.opt.param_groups[1]['lr'] = self.online_lr['lr_y']
 
-    def _run_task(self, meta_input: Dict[str, Union[pd.Index, torch.Tensor]], phase: str):
+
+    def _run_task(self, meta_input: Dict[str, Union[pd.Index, torch.Tensor]], phase: str, counter, backward):
 
         self.framework.opt.zero_grad()
         self.opt.zero_grad()
@@ -369,7 +380,8 @@ class DoubleAdaptManager(IncrementalManager):
         mask_y = None
         if phase != "train":
             test_begin = len(meta_input["y_extra"]) if "y_extra" in meta_input else 0
-            meta_end = test_begin + meta_input["meta_end"]
+            # meta_end = test_begin + meta_input["meta_end"]
+            meta_end = 2
             output = pred[test_begin:].detach().cpu().numpy()
             X_test = X_test[:meta_end]
             X_test_adapted = X_test_adapted[:meta_end]
@@ -383,13 +395,16 @@ class DoubleAdaptManager(IncrementalManager):
             output = pred.detach().cpu().numpy()
 
         """ Optimization of meta-learners """
+        # pred, y_test, y_train, y_train_raw, X_train, X_test
+        indicator = counter % 5
         loss = self.framework.criterion(pred, y_test)
+
         if self.adapt_y:
             if not self.first_order:
                 y = self.framework.teacher_y(X, raw_y, inverse=False)
             loss_y = F.mse_loss(y, raw_y)
+            
             if self.first_order:
-                """ Please refer to Appendix C in https://arxiv.org/pdf/2306.09862.pdf """
                 with torch.no_grad():
                     pred2, _ = self.framework(X_test_adapted, model=None, transform=False, )
                     pred2 = self.framework.teacher_y(X_test, pred2, inverse=True).detach()
@@ -399,9 +414,100 @@ class DoubleAdaptManager(IncrementalManager):
                 loss_y = (loss_old.item() - loss.item()) / self.sigma * loss_y + loss_y * self.reg
             else:
                 loss_y = loss_y * self.reg
+
+            if counter == 0:
+                book = {}
+                book['framework'] = self.framework.state_dict()
+                book['framework_opt'] = self.framework.opt.state_dict()
+                book['opt'] = self.opt.state_dict()
+                torch.save(book, f"books/book_{-1}.pt")
+
             loss_y.backward()
         loss.backward()
+
         if self.adapt_x or self.adapt_y:
             self.opt.step()
         self.framework.opt.step()
+
+        # torch load lagged state dict
+        if backward:
+            book_lag = torch.load(f"books/book_{indicator}.pt")
+        else:
+            book_lag = torch.load(f"books/book_{-1}.pt")
+
+        # torch save the current state dict
+        book = {}
+        book['framework'] = self.framework.state_dict()
+        book['framework_opt'] = self.framework.opt.state_dict()
+        book['opt'] = self.opt.state_dict()
+        torch.save(book, f"books/book_{indicator}.pt")
+
+        # load lagged parameters to models
+        self.framework.load_state_dict(book_lag['framework'])
+        self.framework.opt.load_state_dict(book_lag['framework_opt'])
+        self.opt.load_state_dict(book_lag['opt'])
+
         return output
+
+
+
+
+
+        # destination['framework'] = self.framework.state_dict()
+        # destination['framework_opt'] = self.framework.opt.state_dict()
+        # destination['opt'] = self.opt.state_dict()
+
+
+
+
+
+        # indicator = counter % 5
+        # if backward:
+        #     book_lag = torch.load(f"losses/book_{indicator}.pkl")
+        #     loss_lag = self.framework.criterion(book_lag["pred"], book_lag["y_test"])
+        #     if self.adapt_y:
+        #         loss_y_lag = F.mse_loss(book_lag["y"], book_lag["raw_y"])
+        #         if self.first_order:
+        #             with torch.no_grad():
+        #                 pred2_lag, _ = self.framework(book_lag["X_test_adapted"], model = None, transform = False, )
+        #                 pred2_lag = self.framework.teacher_y(book_lag["X_test"], pred2_lag, inverse = True).detach()
+        #                 loss_old_lag = self.framework.criterion(pred2_lag.view_as(book_lag["y_test"]), book_lag["y_test"])
+        #             loss_y_lag = (loss_old_lag.item() - loss_lag.item()) / self.sigma * loss_y_lag + loss_y_lag * self.reg
+
+        #         loss_y_lag.backward()
+        #     loss_lag.backward()
+
+        # # check backward is done properly
+        # if backward:
+        #     for name, param in self.framework.model.named_parameters():
+        #         if param.grad is not None:
+        #             print(f"Gradients for {name}: {param.grad.norm()}")
+        #         else:
+        #             print(f"No gradients for {name}")
+
+        # if backward:
+        #     if self.adapt_x or self.adapt_y:
+        #         self.opt.step()
+        #     self.framework.opt.step()
+
+        # book = {
+        #     "pred": pred.detach(),
+        #     "y_test": y_test.detach(),
+        #     "X_test_adapted": X_test_adapted,
+        #     "X_test": X_test,
+        #     "y": y,
+        #     "raw_y": raw_y
+        # }
+        # torch.save(book, f"losses/book_{indicator}.pkl")
+        
+        # return output
+
+                #     # ===========================
+        #     if backward:
+        #         loss_y_prevs = torch.load(f"losses/loss_y_{indicator}.pkl").to(self.framework.device)  # loss_y.backward()
+        #         loss_y_prevs.backward()
+
+        
+        # if backward:
+        #     loss_prevs = torch.load(f"losses/loss_{indicator}.pkl").to(self.framework.device)  # loss.backward()
+        #     loss_prevs.backward()

@@ -173,7 +173,6 @@ def init_instance_by_config(
     try:
         return klass(**cls_kwargs, **try_kwargs, **kwargs)
     except (TypeError,):
-        print("what is this?")
         # TypeError for handling errors like
         # 1: `XXX() got multiple values for keyword argument 'YYY'`
         # 2: `XXX() got an unexpected keyword argument 'YYY'
