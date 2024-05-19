@@ -30,9 +30,11 @@ examples/rl/outputs/
 examples/rl_order_execution/data/
 examples/rl_order_execution/outputs/
 
+examples/benchmarks_dynamic/incremental/checkpoints/
 examples/benchmarks_dynamic/incremental/outputs/
 examples/benchmarks_dynamic/incremental/dataset_j/
-examples/benchmarks_dynamic/incremental/checkpoints/
+examples/benchmarks_dynamic/incremental/books/
+
 
 
 *.egg-info/
