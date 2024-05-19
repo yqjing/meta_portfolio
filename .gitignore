@@ -11,7 +11,7 @@ build/
 dist/
 shell_files/
 
-*.pkl
+
 *.hd5
 *.csv
 
@@ -30,12 +30,17 @@ examples/rl/outputs/
 examples/rl_order_execution/data/
 examples/rl_order_execution/outputs/
 
-examples/benchmarks_dynamic/incremental/checkpoints/
-examples/benchmarks_dynamic/incremental/outputs/
-examples/benchmarks_dynamic/incremental/dataset_j/
-examples/benchmarks_dynamic/incremental/books/
+examples/benchmarks_dynamic/incremental/checkpoints/*
+!examples/benchmarks_dynamic/incremental/checkpoints/model.pkl
 
+examples/benchmarks_dynamic/incremental/outputs/*
+!examples/benchmarks_dynamic/incremental/outputs/.gitkeep
 
+examples/benchmarks_dynamic/incremental/books/*
+!examples/benchmarks_dynamic/incremental/books/.gitkeep
+
+examples/benchmarks_dynamic/incremental/results/*
+!examples/benchmarks_dynamic/incremental/results/.gitkeep
 
 *.egg-info/
 

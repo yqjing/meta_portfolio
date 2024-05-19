@@ -126,7 +126,10 @@ class IncrementalManager:
         best_ic, patience = -1e3, self.over_patience
         best_checkpoint = copy.deepcopy(self.framework.state_dict())
         # for epoch in tqdm(range(100), desc="epoch"):
-        for epoch in range(100):
+        
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        epoch_num = 100
+        for epoch in range(epoch_num):
             print(f"current epoch: {epoch}")
             print(f"{get_gpu_status(self.framework.device)}")
             
@@ -450,64 +453,3 @@ class DoubleAdaptManager(IncrementalManager):
         return output
 
 
-
-
-
-        # destination['framework'] = self.framework.state_dict()
-        # destination['framework_opt'] = self.framework.opt.state_dict()
-        # destination['opt'] = self.opt.state_dict()
-
-
-
-
-
-        # indicator = counter % 5
-        # if backward:
-        #     book_lag = torch.load(f"losses/book_{indicator}.pkl")
-        #     loss_lag = self.framework.criterion(book_lag["pred"], book_lag["y_test"])
-        #     if self.adapt_y:
-        #         loss_y_lag = F.mse_loss(book_lag["y"], book_lag["raw_y"])
-        #         if self.first_order:
-        #             with torch.no_grad():
-        #                 pred2_lag, _ = self.framework(book_lag["X_test_adapted"], model = None, transform = False, )
-        #                 pred2_lag = self.framework.teacher_y(book_lag["X_test"], pred2_lag, inverse = True).detach()
-        #                 loss_old_lag = self.framework.criterion(pred2_lag.view_as(book_lag["y_test"]), book_lag["y_test"])
-        #             loss_y_lag = (loss_old_lag.item() - loss_lag.item()) / self.sigma * loss_y_lag + loss_y_lag * self.reg
-
-        #         loss_y_lag.backward()
-        #     loss_lag.backward()
-
-        # # check backward is done properly
-        # if backward:
-        #     for name, param in self.framework.model.named_parameters():
-        #         if param.grad is not None:
-        #             print(f"Gradients for {name}: {param.grad.norm()}")
-        #         else:
-        #             print(f"No gradients for {name}")
-
-        # if backward:
-        #     if self.adapt_x or self.adapt_y:
-        #         self.opt.step()
-        #     self.framework.opt.step()
-
-        # book = {
-        #     "pred": pred.detach(),
-        #     "y_test": y_test.detach(),
-        #     "X_test_adapted": X_test_adapted,
-        #     "X_test": X_test,
-        #     "y": y,
-        #     "raw_y": raw_y
-        # }
-        # torch.save(book, f"losses/book_{indicator}.pkl")
-        
-        # return output
-
-                #     # ===========================
-        #     if backward:
-        #         loss_y_prevs = torch.load(f"losses/loss_y_{indicator}.pkl").to(self.framework.device)  # loss_y.backward()
-        #         loss_y_prevs.backward()
-
-        
-        # if backward:
-        #     loss_prevs = torch.load(f"losses/loss_{indicator}.pkl").to(self.framework.device)  # loss.backward()
-        #     loss_prevs.backward()

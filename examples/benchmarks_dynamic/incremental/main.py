@@ -220,7 +220,7 @@ class IncrementalExp:
         self.data_dir = data_dir
         self.provider_uri = os.path.join(root_path, data_dir)
 
-        calendar = pd.read_pickle("dataset_j/calendar_c_21.pkl")  # pd.series
+        calendar = pd.read_pickle("dataset_j/calendar_corr_21.pkl")  # pd.series
         self.ta = utils.TimeAdjuster(calendar)
 
         self.market = market
@@ -298,18 +298,6 @@ class IncrementalExp:
             test_end=self.test_slice.stop,
         ).basic_task()
 
-
-    def _init_model(self) -> nn.Module:
-        # FIXME: init your own model!
-        from qlib.utils import init_instance_by_config
-
-        if False:
-            return None
-        else:
-            model = init_instance_by_config(self.basic_task["model"])
-            for child in model.__dict__.values():
-                if isinstance(child, nn.Module):
-                    return child
 
     def offline_training(self, segments: Dict[str, tuple] = None, data: pd.DataFrame = None, reload_path=None, save_path=None):
         # model = self._init_model()
@@ -404,7 +392,7 @@ class IncrementalExp:
         return framework.inference(meta_tasks_test=rolling_tasks_data, date_slice=self.test_slice)
 
     def _evaluate_metrics(self, data, pred_y_all):
-        label = data["label", "y1_y2_21_c"]
+        label = data["label"].iloc[:, 0]
         label.index = label.index.droplevel(1)
         label = label.to_frame()
         label.columns = ["label"]
@@ -429,7 +417,7 @@ class IncrementalExp:
         else:
             save_path = None
 
-        data = pd.read_pickle("dataset_j/y1_y2_c_21.pkl")
+        data = pd.read_pickle("dataset_j/y1_y2_corr_21.pkl")
 
         # print(self.segments)
         assert data.index[0][0] <= self.ta.align_time(self.segments['train'][0], tp_type='start')
