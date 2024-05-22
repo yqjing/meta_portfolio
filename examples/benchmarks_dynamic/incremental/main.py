@@ -131,7 +131,7 @@ class IncrementalExp:
             market="csi300",
             horizon= 5 * 2,
             alpha= 360,
-            x_dim= 8 * 60,
+            x_dim= 9 * 60,
             step=2,
             model_name="ALSTM",
             lr=0.001,
@@ -220,7 +220,7 @@ class IncrementalExp:
         self.data_dir = data_dir
         self.provider_uri = os.path.join(root_path, data_dir)
 
-        calendar = pd.read_pickle("dataset_j/calendar_corr_21.pkl")  # pd.series
+        calendar = pd.read_pickle("dataset_j/calendar_c_21_test_2.pkl")  # pd.series
         self.ta = utils.TimeAdjuster(calendar)
 
         self.market = market
@@ -273,7 +273,7 @@ class IncrementalExp:
 
         # self.factor_num = 6 if self.alpha == 360 else 20
         # factor number
-        self.factor_num = 8
+        self.factor_num = 9
         self.x_dim = x_dim if x_dim else (360 if self.alpha == 360 else 20 * 20)
         print('Experiment name:', self.experiment_name)
 
@@ -301,7 +301,7 @@ class IncrementalExp:
 
     def offline_training(self, segments: Dict[str, tuple] = None, data: pd.DataFrame = None, reload_path=None, save_path=None):
         # model = self._init_model()
-        model = torch.load("checkpoints/model.pkl")
+        model = torch.load("checkpoints/model_fac_9.pkl")
 
         if self.naive:
             framework = IncrementalManager(model, x_dim=self.x_dim, lr_model=self.lr, begin_valid_epoch=0)
@@ -363,7 +363,7 @@ class IncrementalExp:
 
             # I don't think this is being runned?
             # model = self._init_model()
-            model = torch.load("checkpoints/model.pkl")
+            model = torch.load("checkpoints/model_fac_9.pkl")
             if self.naive:
                 framework = IncrementalManager(model, x_dim=self.x_dim, lr_model=self.lr,
                                                online_lr=self.online_lr, weight_decay=self.weight_decay,
@@ -417,7 +417,7 @@ class IncrementalExp:
         else:
             save_path = None
 
-        data = pd.read_pickle("dataset_j/y1_y2_corr_21.pkl")
+        data = pd.read_pickle("dataset_j/y1_y2_c_21_test_2.pkl")
 
         # print(self.segments)
         assert data.index[0][0] <= self.ta.align_time(self.segments['train'][0], tp_type='start')

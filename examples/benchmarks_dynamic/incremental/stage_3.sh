@@ -6,11 +6,11 @@
 #SBATCH --cpus-per-task 15
 #SBATCH --mem-per-cpu 2000
 
-#SBATCH --job-name="run_7"
+#SBATCH --job-name="run_8"
 #SBATCH --mail-user=y5jing@uwaterloo.ca
 #SBATCH --mail-type=end,fail   
 #SBATCH --output=./outputs/%x-%j.out
 
 module load anaconda3
-cd ~/project2_test_3/examples/benchmarks_dynamic/incremental
+cd ~/project2_test_4/examples/benchmarks_dynamic/incremental
 python3 main.py
