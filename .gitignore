@@ -42,6 +42,9 @@ examples/benchmarks_dynamic/incremental/books/*
 examples/benchmarks_dynamic/incremental/results/*
 !examples/benchmarks_dynamic/incremental/results/.gitkeep
 
+examples/benchmarks_dynamic/incremental/dataset_j/calendar_c_21_test_2.pkl
+examples/benchmarks_dynamic/incremental/dataset_j/y1_y2_c_21_test_2.pkl
+
 *.egg-info/
 
 # test related

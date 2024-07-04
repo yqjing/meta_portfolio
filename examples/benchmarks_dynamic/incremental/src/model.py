@@ -128,7 +128,7 @@ class IncrementalManager:
         # for epoch in tqdm(range(100), desc="epoch"):
         
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        epoch_num = 100
+        epoch_num = 12
         for epoch in range(epoch_num):
             print(f"current epoch: {epoch}")
             print(f"{get_gpu_status(self.framework.device)}")
