@@ -279,8 +279,8 @@ class IncrementalExp:
 
     @property
     def experiment_name(self):
-        return f"{self.market}_{self.model_name}_alpha{self.alpha}_horizon{self.horizon}_step{self.step}" \
-               f"_rank{self.rank_label}_{self.tag}"
+        return f"{self.model_name}_factor{self.factor_num}_horizon{self.horizon}_step{self.step}" \
+               f"_stopThreshold{0.004}_{self.tag}"
 
     @property
     def basic_task(self):
@@ -312,6 +312,7 @@ class IncrementalExp:
                                            lr_x=self.lr_x, lr_y=self.lr_y,
                                            adapt_x=self.adapt_x, adapt_y=self.adapt_y, reg=self.reg,
                                            num_head=self.num_head, temperature=self.temperature)
+        # skip the offline_training by directly loading the state_dict()
         if reload_path is not None:
             framework.load_state_dict(torch.load(reload_path))
             print('Reload experiment', reload_path)
@@ -432,7 +433,8 @@ class IncrementalExp:
 if __name__ == "__main__":
     start_time = time.time()
     m = IncrementalExp()
-    m.workflow()
+    # if skip_training, set it up here!!!
+    m.workflow(reload_path=None)
     end_time = time.time()
     duration = end_time - start_time
-    print(f"The duration of the program is {duration} seconds.")
+    print(f"The duration of the program is {duration / 60} minutes.")

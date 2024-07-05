@@ -128,7 +128,7 @@ class IncrementalManager:
         # for epoch in tqdm(range(100), desc="epoch"):
         
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        epoch_num = 12
+        epoch_num = 200
         for epoch in range(epoch_num):
             print(f"current epoch: {epoch}")
             print(f"{get_gpu_status(self.framework.device)}")
@@ -144,20 +144,19 @@ class IncrementalManager:
                     best_checkpoint = copy.deepcopy(self.framework.state_dict())
                     torch.save(mse_all, "results/train_mse.pkl")    # requires torch load to unlock
 
-                    if ic < best_ic:
-                        patience -= 1
+                    if mse < 0.004:
+                        patience = -1
                     else:
-                        best_ic = ic
                         patience = self.over_patience
                         
             if patience <= 0:
-                print("patience is negative")
+                print("mse condition is met: stop training.")
                 break
         self.framework.load_state_dict(best_checkpoint)
         self._run_epoch('train', meta_tasks_val)
         self.fitted = True
         if True:
-            print('Save checkpoint in Exp:', checkpoint_path)
+            print('Save checkpoint in the Path:', checkpoint_path)
             torch.save(self.state_dict(), checkpoint_path)
 
     def _run_epoch(self, phase: str, task_list: List[Dict[str, Union[pd.Index, torch.Tensor, np.ndarray]]],
