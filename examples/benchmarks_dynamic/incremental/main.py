@@ -280,7 +280,7 @@ class IncrementalExp:
     @property
     def experiment_name(self):
         return f"{self.model_name}_factor{self.factor_num}_horizon{self.horizon}_step{self.step}" \
-               f"_stopThreshold{0.004}_{self.tag}"
+               f"_stopThreshold{0.005}_{self.tag}"
 
     @property
     def basic_task(self):

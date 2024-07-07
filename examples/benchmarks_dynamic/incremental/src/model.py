@@ -144,7 +144,7 @@ class IncrementalManager:
                     best_checkpoint = copy.deepcopy(self.framework.state_dict())
                     torch.save(mse_all, "results/train_mse.pkl")    # requires torch load to unlock
 
-                    if mse < 0.004:
+                    if mse < 0.004 and epoch > 5:
                         patience = -1
                     else:
                         patience = self.over_patience
@@ -183,7 +183,7 @@ class IncrementalManager:
 
         self.phase = phase
         counter = 0
-        for i in tqdm(indices, desc=phase) if True else indices:
+        for i in tqdm(indices, desc=phase, mininterval=0.5) if True else indices:
             meta_input = task_list[i]
             if not isinstance(meta_input['X_train'], torch.Tensor):
                 meta_input = {
