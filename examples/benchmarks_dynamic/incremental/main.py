@@ -22,6 +22,7 @@ sys.path.append(str(DIRNAME.parent.parent.parent))
 
 from src.model import IncrementalManager, DoubleAdaptManager
 from src import utils
+from net import ALSTMModel
 
 
 class Benchmark:
@@ -89,11 +90,7 @@ class Benchmark:
 
         h_conf = task["dataset"]["kwargs"]["handler"]
 
-        if not h_path.exists():
-            from qlib.utils import init_instance_by_config
-            h = init_instance_by_config(h_conf)
-            h.to_pickle(h_path, dump_all=True)
-            print('Save handler file to', h_path)
+        h_path = "Path"
 
         task["dataset"]["kwargs"]["handler"] = f"file://{h_path}"
 
@@ -271,11 +268,10 @@ class IncrementalExp:
         self.preprocess_tensor = preprocess_tensor
         self.use_extra = use_extra
 
-        # self.factor_num = 6 if self.alpha == 360 else 20
         # factor number
         self.factor_num = 11
         self.x_dim = x_dim if x_dim else (360 if self.alpha == 360 else 20 * 20)
-        print('Experiment name:', self.experiment_name)
+        print('Jing Sole Experiment name:', self.experiment_name)
 
     @property
     def experiment_name(self):
@@ -301,7 +297,7 @@ class IncrementalExp:
 
     def offline_training(self, segments: Dict[str, tuple] = None, data: pd.DataFrame = None, reload_path=None, save_path=None):
         # model = self._init_model()
-        model = torch.load("checkpoints/model_fac_11.pkl")
+        model = ALSTMModel(d_feat=self.factor_num)
 
         if self.naive:
             framework = IncrementalManager(model, x_dim=self.x_dim, lr_model=self.lr, begin_valid_epoch=0)
@@ -364,7 +360,7 @@ class IncrementalExp:
 
             # I don't think this is being runned?
             # model = self._init_model()
-            model = torch.load("checkpoints/model_fac_9.pkl")
+            model = torch.load("checkpoints/model_fac_11.pkl")
             if self.naive:
                 framework = IncrementalManager(model, x_dim=self.x_dim, lr_model=self.lr,
                                                online_lr=self.online_lr, weight_decay=self.weight_decay,
