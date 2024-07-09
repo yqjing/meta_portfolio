@@ -132,7 +132,7 @@ class IncrementalExp:
             horizon= 5 * 2,
             alpha= 360,
             x_dim= 11 * 60,
-            step=2,
+            step=10,  # 2
             model_name="ALSTM",
             lr=0.001,
             lr_ma=None,
@@ -140,7 +140,7 @@ class IncrementalExp:
             lr_x=None,
             lr_y=None,
             online_lr: dict = None,
-            reg=0.5,
+            reg=1, # 0.5
             weight_decay=0,
             num_head=12,   # 8
             tau=10,

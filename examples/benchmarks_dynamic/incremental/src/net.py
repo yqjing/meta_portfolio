@@ -86,6 +86,15 @@ class FeatureAdapter(nn.Module):
         return x + sum([s[..., i, :] * self.heads[i](x) for i in range(self.num_head)])
 
 
+# asymmetric loss
+class ASL(nn.Module):
+    def __init__(self):
+        super(ASL, self).__init__()
+
+    def forward(self, y_hat, y_true):
+        loss = torch.where(y_hat > y_true, (3/2) * (y_hat - y_true) ** 2, (1/2) * (y_hat - y_true) ** 2)
+        return loss.mean()
+
 class ForecastModel(nn.Module):
     def __init__(self, model: nn.Module, x_dim: int = None, lr: float = 0.001, weight_decay: float = 0,
                  need_permute: bool = False):
@@ -100,8 +109,7 @@ class ForecastModel(nn.Module):
         """
         super().__init__()
         self.lr = lr
-        # self.lr = task_config["model"]['kwargs']['lr']
-        self.criterion = nn.MSELoss()
+        self.criterion = ASL()  # nn.MSELoss()
         self.model = model
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.need_permute = need_permute

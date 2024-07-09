@@ -144,7 +144,7 @@ class IncrementalManager:
                     best_checkpoint = copy.deepcopy(self.framework.state_dict())
                     torch.save(mse_all, "results/train_mse.pkl")    # requires torch load to unlock
 
-                    if mse < 0.004 and epoch > 5:
+                    if mse < 0.005 and epoch > 5:
                         patience = -1
                     else:
                         patience = self.over_patience
@@ -190,7 +190,7 @@ class IncrementalManager:
                     k: torch.tensor(v, device=self.framework.device, dtype=torch.float32) if 'idx' not in k else v
                     for k, v in meta_input.items()
                 }
-            if counter >= 5:
+            if counter >= 1:
                 pred = self._run_task(meta_input, phase, counter, backward = True)
             else:
                 pred = self._run_task(meta_input, phase, counter, backward = False)
@@ -383,7 +383,7 @@ class DoubleAdaptManager(IncrementalManager):
         if phase != "train":
             test_begin = len(meta_input["y_extra"]) if "y_extra" in meta_input else 0
             # meta_end = test_begin + meta_input["meta_end"]
-            meta_end = 2
+            meta_end = 10
             output = pred[test_begin:].detach().cpu().numpy()
             X_test = X_test[:meta_end]
             X_test_adapted = X_test_adapted[:meta_end]
@@ -398,13 +398,12 @@ class DoubleAdaptManager(IncrementalManager):
 
         """ Optimization of meta-learners """
         # pred, y_test, y_train, y_train_raw, X_train, X_test
-        indicator = counter % 5
         loss = self.framework.criterion(pred, y_test)
 
         if self.adapt_y:
             if not self.first_order:
                 y = self.framework.teacher_y(X, raw_y, inverse=False)
-            loss_y = F.mse_loss(y, raw_y)
+            loss_y = F.mse_loss(y, raw_y) 
             
             if self.first_order:
                 with torch.no_grad():
@@ -432,17 +431,14 @@ class DoubleAdaptManager(IncrementalManager):
         self.framework.opt.step()
 
         # torch load lagged state dict
-        if backward:
-            book_lag = torch.load(f"books/book_{indicator}.pt")
-        else:
-            book_lag = torch.load(f"books/book_{-1}.pt")
+        book_lag = torch.load(f"books/book_{-1}.pt")
 
         # torch save the current state dict
         book = {}
         book['framework'] = self.framework.state_dict()
         book['framework_opt'] = self.framework.opt.state_dict()
         book['opt'] = self.opt.state_dict()
-        torch.save(book, f"books/book_{indicator}.pt")
+        torch.save(book, f"books/book_{-1}.pt")
 
         # load lagged parameters to models
         self.framework.load_state_dict(book_lag['framework'])
