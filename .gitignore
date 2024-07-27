@@ -9,8 +9,9 @@ __pycache__/
 _build
 build/
 dist/
+shell_files/
 
-*.pkl
+
 *.hd5
 *.csv
 
@@ -29,10 +30,20 @@ examples/rl/outputs/
 examples/rl_order_execution/data/
 examples/rl_order_execution/outputs/
 
-examples/benchmarks_dynamic/incremental/outputs/
-examples/benchmarks_dynamic/incremental/dataset_j/
-examples/benchmarks_dynamic/incremental/checkpoints/
+examples/benchmarks_dynamic/incremental/checkpoints/model_fac_9.pkl
+examples/benchmarks_dynamic/incremental/checkpoints/model_fac_11.pkl
 
+examples/benchmarks_dynamic/incremental/outputs/*
+!examples/benchmarks_dynamic/incremental/outputs/.gitkeep
+
+examples/benchmarks_dynamic/incremental/books/*
+!examples/benchmarks_dynamic/incremental/books/.gitkeep
+
+examples/benchmarks_dynamic/incremental/results/*
+!examples/benchmarks_dynamic/incremental/results/.gitkeep
+
+examples/benchmarks_dynamic/incremental/dataset_j/calendar_c_21_test_2.pkl
+examples/benchmarks_dynamic/incremental/dataset_j/y1_y2_c_21_test_2.pkl
 
 *.egg-info/
 
