@@ -76,10 +76,7 @@ benchmark_dynamic/outputs/*
 !benchmark_dynamic/outputs/.gitkeep
 benchmark_dynamic/checkpoints/*
 !benchmark_dynamic/checkpoints/.gitkeep
-
 benchmark_dynamic/results/train_mse.pkl
-
-# small change
 
 
 
