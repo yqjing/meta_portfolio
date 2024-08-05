@@ -70,8 +70,8 @@ tags
 
 
 ### newly added
-benchmark_dynamic/results/df_pred.pkl
-benchmark_dynamic/results/train_mse.pkl
+benchmark_dynamic/results/*
+!benchmark_dynamic/results/.gitkeep
 benchmark_dynamic/outputs/*
 !benchmark_dynamic/outputs/.gitkeep
 benchmark_dynamic/checkpoints/*
