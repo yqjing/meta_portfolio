@@ -129,7 +129,7 @@ class IncrementalExp:
         self.data_dir = data_dir
         self.provider_uri = os.path.join(root_path, data_dir)
 
-        calendar = pd.read_pickle("dataset_j/calendar_dr_numerica.pkl")  # pd.series
+        calendar = pd.read_pickle("dataset_j/SLT6_cal3.pkl")  # pd.series
         self.ta = utils.TimeAdjuster(calendar)
 
         self.market = market
@@ -307,7 +307,7 @@ class IncrementalExp:
         else:
             save_path = None
 
-        data = pd.read_pickle("dataset_j/feature_label_matrix_dr_numerica.pkl")
+        data = pd.read_pickle("dataset_j/SLT6_3.pkl")
 
         # print(self.segments)
         assert data.index[0][0] <= self.ta.align_time(self.segments['train'][0], tp_type='start')
@@ -322,7 +322,7 @@ class IncrementalExp:
 if __name__ == "__main__":
     start_time = time.time()
     m = IncrementalExp()
-    # if skip_training, set it up here!!!
+    # if skip_training, set it up here!!! Add the reload_path.
     m.workflow(reload_path=None)
     end_time = time.time()
     duration = end_time - start_time

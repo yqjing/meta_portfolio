@@ -92,7 +92,7 @@ class ASL(nn.Module):
         super(ASL, self).__init__()
 
     def forward(self, y_hat, y_true):
-        loss = torch.where(y_hat > y_true, (3/2) * (y_hat - y_true) ** 2, (1/2) * (y_hat - y_true) ** 2)
+        loss = torch.where(y_hat > y_true, (y_hat - y_true) ** 2, (y_hat - y_true) ** 2)
         return loss.mean()
 
 class ForecastModel(nn.Module):
@@ -109,7 +109,7 @@ class ForecastModel(nn.Module):
         """
         super().__init__()
         self.lr = lr
-        self.criterion = ASL()  # nn.MSELoss()
+        self.criterion = ASL()  # nn.MSELoss(), ASL()
         self.model = model
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.need_permute = need_permute

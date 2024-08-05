@@ -128,7 +128,7 @@ class IncrementalManager:
         # for epoch in tqdm(range(100), desc="epoch"):
         
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        epoch_num = 200
+        epoch_num = 20
         for epoch in range(epoch_num):
             print(f"current epoch: {epoch}")
             print(f"{get_gpu_status(self.framework.device)}")
@@ -144,7 +144,7 @@ class IncrementalManager:
                     best_checkpoint = copy.deepcopy(self.framework.state_dict())
                     torch.save(mse_all, "results/train_mse.pkl")    # requires torch load to unlock
 
-                    if mse < 0.005 and epoch > 5:
+                    if mse < 0.17 and epoch > 5:
                         patience = -1
                     else:
                         patience = self.over_patience
@@ -445,6 +445,7 @@ class DoubleAdaptManager(IncrementalManager):
         self.framework.opt.load_state_dict(book_lag['framework_opt'])
         self.opt.load_state_dict(book_lag['opt'])
 
+        output = np.clip(output, 0, 1)
         return output
 
 

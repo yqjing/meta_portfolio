@@ -67,3 +67,13 @@ tags
 .idea/
 
 .DS_Store
+
+
+### newly added
+benchmarks_dynamic/results/df_pred.pkl
+benchmarks_dynamic/results/train_mse.pkl
+benchmarks_dynamic/outputs/.
+
+
+
+
