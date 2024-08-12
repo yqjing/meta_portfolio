@@ -144,7 +144,7 @@ class IncrementalManager:
                     best_checkpoint = copy.deepcopy(self.framework.state_dict())
                     torch.save(mse_all, "results/train_mse.pkl")    # requires torch load to unlock
 
-                    if mse < 0.009 and epoch > 5:
+                    if mse < 0.05 and epoch > 4:
                         patience = -1
                     else:
                         patience = self.over_patience

@@ -78,6 +78,10 @@ benchmark_dynamic/checkpoints/*
 !benchmark_dynamic/checkpoints/.gitkeep
 benchmark_dynamic/results/train_mse.pkl
 
+benchmark_dynamic/dataset_j/*
+!benchmark_dynamic/dataset_j/.gitkeep
+
+
 
 
 
