@@ -225,6 +225,10 @@ class ALSTMModel(nn.Module):
         out = self.fc_out(
             torch.cat((rnn_out[:, -1, :], out_att), dim=1)
         )  # [batch, seq_len, num_directions * hidden_size] -> [batch, 1]
+        # # =====apply tanh to normalize the output to [0, 1]======
+        # out = torch.tanh(out)
+        # out = (out + 1) / 2
+        # # ====================================================
         return out[..., 0]
 
 
